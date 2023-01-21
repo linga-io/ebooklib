@@ -1491,72 +1491,76 @@ class EpubReader(object):
 
     def _load_manifest(self):
         for r in self.container.find('{%s}%s' % (NAMESPACES['OPF'], 'manifest')):
-            if r is not None and r.tag != '{%s}item' % NAMESPACES['OPF']:
-                continue
+            try:
+                if r is not None and r.tag != '{%s}item' % NAMESPACES['OPF']:
+                    continue
 
-            media_type = r.get('media-type')
-            _properties = r.get('properties', '')
+                media_type = r.get('media-type')
+                _properties = r.get('properties', '')
 
-            if _properties:
-                properties = _properties.split(' ')
-            else:
-                properties = []
-
-            # people use wrong content types
-            if media_type == 'image/jpg':
-                media_type = 'image/jpeg'
-
-            if media_type == 'application/x-dtbncx+xml':
-                ei = EpubNcx(uid=r.get('id'), file_name=unquote(r.get('href')))
-
-                ei.content = self.read_file(zip_path.join(self.opf_dir, ei.file_name))
-            elif media_type == 'application/smil+xml':
-                ei = EpubSMIL(uid=r.get('id'), file_name=unquote(r.get('href')))
-
-                ei.content = self.read_file(zip_path.join(self.opf_dir, ei.file_name))
-            elif media_type == 'application/xhtml+xml':
-                if 'nav' in properties:
-                    ei = EpubNav(uid=r.get('id'), file_name=unquote(r.get('href')))
-
-                    ei.content = self.read_file(zip_path.join(self.opf_dir, r.get('href')))
-                elif 'cover' in properties:
-                    ei = EpubCoverHtml()
-
-                    ei.content = self.read_file(zip_path.join(self.opf_dir, unquote(r.get('href'))))
+                if _properties:
+                    properties = _properties.split(' ')
                 else:
-                    ei = EpubHtml()
+                    properties = []
+
+                # people use wrong content types
+                if media_type == 'image/jpg':
+                    media_type = 'image/jpeg'
+
+                if media_type == 'application/x-dtbncx+xml':
+                    ei = EpubNcx(uid=r.get('id'), file_name=unquote(r.get('href')))
+
+                    ei.content = self.read_file(zip_path.join(self.opf_dir, ei.file_name))
+                elif media_type == 'application/smil+xml':
+                    ei = EpubSMIL(uid=r.get('id'), file_name=unquote(r.get('href')))
+
+                    ei.content = self.read_file(zip_path.join(self.opf_dir, ei.file_name))
+                elif media_type == 'application/xhtml+xml':
+                    if 'nav' in properties:
+                        ei = EpubNav(uid=r.get('id'), file_name=unquote(r.get('href')))
+
+                        ei.content = self.read_file(zip_path.join(self.opf_dir, r.get('href')))
+                    elif 'cover' in properties:
+                        ei = EpubCoverHtml()
+
+                        ei.content = self.read_file(zip_path.join(self.opf_dir, unquote(r.get('href'))))
+                    else:
+                        ei = EpubHtml()
+
+                        ei.id = r.get('id')
+                        ei.file_name = unquote(r.get('href'))
+                        ei.media_type = media_type
+                        ei.media_overlay = r.get('media-overlay', None)
+                        ei.media_duration = r.get('duration', None)
+                        ei.content = self.read_file(zip_path.join(self.opf_dir, ei.get_name()))
+                        ei.properties = properties
+                elif media_type in IMAGE_MEDIA_TYPES:
+                    if 'cover-image' in properties:
+                        ei = EpubCover(uid=r.get('id'), file_name=unquote(r.get('href')))
+
+                        ei.media_type = media_type
+                        ei.content = self.read_file(zip_path.join(self.opf_dir, ei.get_name()))
+                    else:
+                        ei = EpubImage()
+
+                        ei.id = r.get('id')
+                        ei.file_name = unquote(r.get('href'))
+                        ei.media_type = media_type
+                        ei.content = self.read_file(zip_path.join(self.opf_dir, ei.get_name()))
+                else:
+                    # different types
+                    ei = EpubItem()
 
                     ei.id = r.get('id')
                     ei.file_name = unquote(r.get('href'))
                     ei.media_type = media_type
-                    ei.media_overlay = r.get('media-overlay', None)
-                    ei.media_duration = r.get('duration', None)
+
                     ei.content = self.read_file(zip_path.join(self.opf_dir, ei.get_name()))
-                    ei.properties = properties
-            elif media_type in IMAGE_MEDIA_TYPES:
-                if 'cover-image' in properties:
-                    ei = EpubCover(uid=r.get('id'), file_name=unquote(r.get('href')))
 
-                    ei.media_type = media_type
-                    ei.content = self.read_file(zip_path.join(self.opf_dir, ei.get_name()))
-                else:
-                    ei = EpubImage()
-
-                    ei.id = r.get('id')
-                    ei.file_name = unquote(r.get('href'))
-                    ei.media_type = media_type
-                    ei.content = self.read_file(zip_path.join(self.opf_dir, ei.get_name()))
-            else:
-                # different types
-                ei = EpubItem()
-
-                ei.id = r.get('id')
-                ei.file_name = unquote(r.get('href'))
-                ei.media_type = media_type
-
-                ei.content = self.read_file(zip_path.join(self.opf_dir, ei.get_name()))
-
-            self.book.add_item(ei)
+                self.book.add_item(ei)
+            except KeyError as err:
+                print("WARN", err)
+                pass
 
     def _parse_ncx(self, data):
         tree = parse_string(data)
