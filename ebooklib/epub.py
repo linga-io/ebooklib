@@ -370,6 +370,9 @@ class EpubHtml(EpubItem):
 
         return ''
 
+    def get_raw_content(self):
+        return self.content
+
     def get_content(self, default=None):
         """
         Returns content for this document as HTML string. Content will be of type 'str' (Python 2)
