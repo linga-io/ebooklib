@@ -37,7 +37,7 @@ from ebooklib.utils import parse_string, parse_html_string, guess_type, get_page
 
 
 # Version of EPUB library
-VERSION = (0, 18, 1)
+VERSION = (0, 19, 0)
 
 NAMESPACES = {'XML': 'http://www.w3.org/XML/1998/namespace',
               'EPUB': 'http://www.idpf.org/2007/ops',
@@ -258,6 +258,7 @@ class EpubHtml(EpubItem):
         self.media_overlay = media_overlay
         self.media_duration = media_duration
 
+        self.metas = []
         self.links = []
         self.properties = []
         self.pages = []
@@ -297,6 +298,23 @@ class EpubHtml(EpubItem):
           As string returns language code.
         """
         return self.lang
+
+    def add_meta(self, **kwgs):
+        """
+        Add additional <meta> to the document. 
+
+        >>> add_meta(name='viewport', content='width=device-width, initial-scale=1')
+        """
+        self.metas.append(kwgs)
+
+    def get_metas(self):
+        """
+        Returns list of additional metas defined for this document.
+
+        :Returns:
+          As tuple return list of metas.
+        """
+        return (meta for meta in self.metas)
 
     def add_link(self, **kwgs):
         """
@@ -352,7 +370,7 @@ class EpubHtml(EpubItem):
         try:
             html_tree = parse_html_string(self.content)
         except:
-            return ''
+            return six.b('')
 
         html_root = html_tree.getroottree()
 
@@ -369,7 +387,7 @@ class EpubHtml(EpubItem):
 
             return tree_str
 
-        return ''
+        return six.b('')
 
     def get_raw_content(self):
         return self.content
@@ -398,13 +416,16 @@ class EpubHtml(EpubItem):
         try:
             html_tree = parse_html_string(self.content)
         except:
-            return ''
+            return six.b('')
 
         html_root = html_tree.getroottree()
 
         # create and populate head
 
         _head = etree.SubElement(tree_root, 'head')
+
+        for meta in self.metas:
+            _meta = etree.SubElement(_head, 'meta', meta)
 
         if self.title != '':
             _title = etree.SubElement(_head, 'title')
@@ -1621,12 +1642,12 @@ class EpubReader(object):
                     title = item_node[0].text_content()
                     children = parse_list(sublist_node)
 
-                    if link_node is not None:
+                    if link_node is not None and link_node.get('href'):
                         href = zip_path.normpath(zip_path.join(base_path, link_node.get('href')))
                         items.append((Section(title, href=href), children))
                     else:
                         items.append((Section(title), children))
-                elif link_node is not None:
+                elif link_node is not None and link_node.get('href'):
                     title = link_node.text_content()
                     href = zip_path.normpath(zip_path.join(base_path, link_node.get('href')))
 
