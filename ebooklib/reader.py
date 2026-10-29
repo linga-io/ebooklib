@@ -349,7 +349,9 @@ class EpubReader:
                 ncx_item = self.book.get_item_with_id(toc)
 
                 if ncx_item is None:
-                    raise EpubException(-1, "Can not find ncx file.")
+                    # an unknown id, or an NCX whose file is missing and was skipped in _load_manifest
+                    logger.warning("Can not find ncx file %r, reading the book without its NCX table of contents", toc)
+                    return
 
                 try:
                     ncxFile = self.read_file(zip_path.join(self.opf_dir, ncx_item.get_name()))

@@ -178,3 +178,14 @@ def test_empty_ncx_nav_map_leaves_the_toc_to_the_nav_document(tmp_path):
     book = read(tmp_path, CHAPTER_ITEM + NCX_ITEM + NAV_ITEM, files, spine=NCX_SPINE, options={"ignore_ncx": False})
 
     assert links(book.toc) == [("chapter.xhtml", "One")]
+
+
+@pytest.mark.parametrize("manifest", [CHAPTER_ITEM, CHAPTER_ITEM + NCX_ITEM], ids=["unknown-id", "missing-file"])
+def test_missing_ncx_leaves_the_toc_to_the_nav_document(tmp_path, caplog, manifest):
+    files = {"OEBPS/nav.xhtml": NAV_TOC}
+
+    with caplog.at_level(logging.WARNING, logger="ebooklib.reader"):
+        book = read(tmp_path, manifest + NAV_ITEM, files, spine=NCX_SPINE, options={"ignore_ncx": False})
+
+    assert links(book.toc) == [("chapter.xhtml", "One")]
+    assert "ncx" in caplog.text
