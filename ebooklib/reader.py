@@ -279,7 +279,10 @@ class EpubReader:
         html_node = parse_html_string(data)
         if navtype == "toc":
             # parsing the table of contents
-            nav_node = cast("list[etree._Element]", html_node.xpath("//nav[@*='toc']"))[0]
+            _toc = cast("list[etree._Element]", html_node.xpath("//nav[@*='toc']"))
+            if len(_toc) == 0:
+                return
+            nav_node = _toc[0]
         else:
             # parsing the list of pages
             _page_list = cast("list[etree._Element]", html_node.xpath("//nav[@*='page-list']"))
@@ -289,6 +292,9 @@ class EpubReader:
 
         def parse_list(list_node):
             items = []
+            if list_node is None:
+                # a nav without a list
+                return items
 
             for item_node in list_node.findall("li"):
                 sublist_node = item_node.find("ol")

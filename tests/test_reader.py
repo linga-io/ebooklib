@@ -189,3 +189,19 @@ def test_missing_ncx_leaves_the_toc_to_the_nav_document(tmp_path, caplog, manife
 
     assert links(book.toc) == [("chapter.xhtml", "One")]
     assert "ncx" in caplog.text
+
+
+@pytest.mark.parametrize(
+    "nav_body",
+    [
+        '<nav epub:type="landmarks"><ol><li><a href="chapter.xhtml">One</a></li></ol></nav>',
+        '<nav epub:type="toc"><h1>Contents</h1></nav>',
+        '<nav epub:type="toc"><h1>Contents</h1></nav><nav epub:type="page-list"><h1>Pages</h1></nav>',
+    ],
+    ids=["no-toc-nav", "toc-without-list", "page-list-without-list"],
+)
+def test_nav_document_without_a_list_reads_as_an_empty_toc(tmp_path, nav_body):
+    book = read(tmp_path, CHAPTER_ITEM + NAV_ITEM, {"OEBPS/nav.xhtml": nav(nav_body)})
+
+    assert book.toc == []
+    assert book.pages == []
