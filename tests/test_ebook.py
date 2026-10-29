@@ -122,7 +122,7 @@ class TestEbook:
         f.seek(0)
 
         bk = epub.read_epub(f, {"ignore_ncx": False})
-        assert type(bk.toc) is epub.Link
+        assert bk.toc == []
 
         bk = epub.read_epub(f, {"ignore_ncx": True})
         assert len(bk.toc) == 0

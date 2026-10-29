@@ -170,3 +170,11 @@ def test_ncx_nav_point_without_a_label_reads_with_an_empty_title(tmp_path):
     book = read(tmp_path, CHAPTER_ITEM + NCX_ITEM, {"OEBPS/toc.ncx": toc_ncx}, spine=NCX_SPINE)
 
     assert links(book.toc) == [("chapter.xhtml", "")]
+
+
+def test_empty_ncx_nav_map_leaves_the_toc_to_the_nav_document(tmp_path):
+    files = {"OEBPS/toc.ncx": ncx("<navMap/>"), "OEBPS/nav.xhtml": NAV_TOC}
+
+    book = read(tmp_path, CHAPTER_ITEM + NCX_ITEM + NAV_ITEM, files, spine=NCX_SPINE, options={"ignore_ncx": False})
+
+    assert links(book.toc) == [("chapter.xhtml", "One")]
