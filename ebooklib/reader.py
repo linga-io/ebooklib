@@ -304,7 +304,8 @@ class EpubReader:
                 link_node = item_node.find("a")
 
                 if sublist_node is not None:
-                    title = item_node[0].text_content()
+                    # the first element child, never a comment; there is one: the sublist itself
+                    title = item_node.find("*").text_content()
                     children = parse_list(sublist_node)
 
                     if link_node is not None and link_node.get("href"):

@@ -247,3 +247,16 @@ def test_directory_source_without_its_package_files_raises_epub_exception(tmp_pa
 
     with pytest.raises(epub.EpubException):
         epub.read_epub(path)
+
+
+def test_nav_section_title_skips_a_leading_comment(tmp_path):
+    nav_body = (
+        '<nav epub:type="toc"><ol><li><!-- part --><span>Part</span>'
+        '<ol><li><a href="chapter.xhtml">One</a></li></ol></li></ol></nav>'
+    )
+
+    book = read(tmp_path, CHAPTER_ITEM + NAV_ITEM, {"OEBPS/nav.xhtml": nav(nav_body)})
+
+    [(section, children)] = book.toc
+    assert section.title == "Part"
+    assert links(children) == [("chapter.xhtml", "One")]
