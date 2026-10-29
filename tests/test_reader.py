@@ -260,3 +260,16 @@ def test_nav_section_title_skips_a_leading_comment(tmp_path):
     [(section, children)] = book.toc
     assert section.title == "Part"
     assert links(children) == [("chapter.xhtml", "One")]
+
+
+@pytest.mark.parametrize(
+    ("nav_label", "title"),
+    [("<navLabel><!-- c --><text>A</text></navLabel>", "A"), ("<navLabel><text/></navLabel>", "")],
+    ids=["leading-comment", "empty-text"],
+)
+def test_ncx_nav_point_title_is_the_text_of_its_label(tmp_path, nav_label, title):
+    toc_ncx = ncx(f'<navMap><navPoint id="p1">{nav_label}<content src="chapter.xhtml"/></navPoint></navMap>')
+
+    book = read(tmp_path, CHAPTER_ITEM + NCX_ITEM, {"OEBPS/toc.ncx": toc_ncx}, spine=NCX_SPINE)
+
+    assert links(book.toc) == [("chapter.xhtml", title)]

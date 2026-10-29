@@ -262,7 +262,7 @@ class EpubReader:
 
             for a in elems:
                 if a.tag == f"{{{NAMESPACES['DAISY']}}}navLabel":
-                    label = a[0].text if len(a) else ""
+                    label = a.findtext(f"{{{NAMESPACES['DAISY']}}}text") or ""
                 if a.tag == f"{{{NAMESPACES['DAISY']}}}content":
                     content = a.get("src", "")
                 if a.tag == f"{{{NAMESPACES['DAISY']}}}navPoint":
