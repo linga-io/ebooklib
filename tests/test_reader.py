@@ -98,3 +98,11 @@ def test_epub_module_still_exports_the_utils_helpers():
 
     for name in ("parse_string", "parse_html_string", "guess_type", "get_pages_for_items"):
         assert getattr(epub, name) is getattr(utils, name)
+
+
+def test_opf_meta_elements_are_read_under_their_name(tmp_path):
+    metadata = METADATA.replace("</metadata>", '<meta name="cover" content="cover-img"/></metadata>')
+
+    book = read(tmp_path, CHAPTER_ITEM, {}, metadata=metadata)
+
+    assert book.get_metadata("OPF", "cover") == [(None, {"name": "cover", "content": "cover-img"})]

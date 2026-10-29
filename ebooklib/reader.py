@@ -111,7 +111,8 @@ class EpubReader:
             raise EpubException(-1, "Can not find metadata element")
 
         nsmap = metadata.nsmap
-        default_ns = nsmap.get(None, "")
+        # in Clark notation, to compare with element tags: "{http://www.idpf.org/2007/opf}"
+        default_ns = f"{{{nsmap[None]}}}" if None in nsmap else ""
 
         nsdict: dict[str | None, dict[str, list[Any]]] = {v: {} for v in nsmap.values()}
 
