@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with EbookLib.  If not, see <http://www.gnu.org/licenses/>.
 
+import codecs
 import io
 import mimetypes
 import os
@@ -43,9 +44,11 @@ def parse_string(s: str | bytes) -> etree._ElementTree:
 def parse_html_string(s: str | bytes):
     from lxml import html
 
-    utf8_parser = html.HTMLParser(encoding="utf-8")
+    # Forcing UTF-8 overrides a UTF-16 byte order mark; libxml2 detects the mark when no encoding is forced.
+    utf16 = isinstance(s, bytes) and s.startswith((codecs.BOM_UTF16_LE, codecs.BOM_UTF16_BE))
+    parser = html.HTMLParser(encoding=None if utf16 else "utf-8")
 
-    html_tree = html.document_fromstring(s, parser=utf8_parser)
+    html_tree = html.document_fromstring(s, parser=parser)
 
     return html_tree
 
