@@ -85,7 +85,7 @@ class EpubReader:
     def _load_container(self) -> None:
         try:
             meta_inf = self.read_file("META-INF/container.xml")
-        except KeyError:
+        except (KeyError, OSError):
             raise EpubException(-1, "Can not find META-INF/container.xml") from None
 
         tree = parse_string(meta_inf)
@@ -188,9 +188,10 @@ class EpubReader:
 
             try:
                 content = self.read_file(zip_path.join(self.opf_dir, href))
-            except KeyError as err:
-                # One file missing from the archive should not fail the whole book: skip its item.
-                logger.warning("Skipping manifest item %r, its file is missing: %s", href, err)
+            except (KeyError, OSError) as err:
+                # One file missing from the archive (KeyError) or unreadable in a directory source (OSError, also for
+                # a path outside it) should not fail the whole book: skip its item.
+                logger.warning("Skipping manifest item %r, its file can not be read: %s", href, err)
                 continue
 
             ei: EpubItem
@@ -380,7 +381,7 @@ class EpubReader:
     def _load_opf_file(self) -> None:
         try:
             s = self.read_file(self.opf_file)
-        except KeyError:
+        except (KeyError, OSError):
             raise EpubException(-1, "Can not find container file") from None
 
         self.container = parse_string(s)

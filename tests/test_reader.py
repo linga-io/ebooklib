@@ -217,3 +217,33 @@ def test_utf16_document_keeps_its_text(tmp_path, codec):
     assert isinstance(item, epub.EpubHtml)
     assert b"<p>Text</p>" in item.get_content()
     assert b"<p>Text</p>" in item.get_body_content()
+
+
+def make_directory(path, opf, files):
+    for name, content in {"META-INF/container.xml": CONTAINER, "OEBPS/content.opf": opf, **files}.items():
+        if content is not None:
+            (path / name).parent.mkdir(parents=True, exist_ok=True)
+            (path / name).write_bytes(content)
+    return str(path)
+
+
+@pytest.mark.parametrize("href", ["missing.xhtml", "../../outside.xhtml"], ids=["missing-file", "outside-directory"])
+def test_unreadable_file_in_a_directory_source_is_skipped_with_a_warning(tmp_path, caplog, href):
+    (tmp_path / "outside.xhtml").write_bytes(CHAPTER)
+    opf = make_opf(CHAPTER_ITEM + f'<item id="gone" href="{href}" media-type="application/xhtml+xml"/>')
+    path = make_directory(tmp_path / "book", opf, {"OEBPS/chapter.xhtml": CHAPTER})
+
+    with caplog.at_level(logging.WARNING, logger="ebooklib.reader"):
+        book = epub.read_epub(path)
+
+    assert book.get_item_with_id("chapter") is not None
+    assert book.get_item_with_id("gone") is None
+    assert href in caplog.text
+
+
+@pytest.mark.parametrize("missing", ["META-INF/container.xml", "OEBPS/content.opf"])
+def test_directory_source_without_its_package_files_raises_epub_exception(tmp_path, missing):
+    path = make_directory(tmp_path / "book", make_opf(CHAPTER_ITEM), {"OEBPS/chapter.xhtml": CHAPTER, missing: None})
+
+    with pytest.raises(epub.EpubException):
+        epub.read_epub(path)
