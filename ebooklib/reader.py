@@ -249,6 +249,9 @@ class EpubReader:
         tree_root = tree.getroot()
 
         nav_map = tree_root.find(f"{{{NAMESPACES['DAISY']}}}navMap")
+        if nav_map is None:
+            # no navMap, or an NCX in another namespace: the book has no NCX table of contents
+            return
 
         def _get_children(elems, n, nid):
             label, content = "", ""
@@ -256,7 +259,7 @@ class EpubReader:
 
             for a in elems:
                 if a.tag == f"{{{NAMESPACES['DAISY']}}}navLabel":
-                    label = a[0].text
+                    label = a[0].text if len(a) else ""
                 if a.tag == f"{{{NAMESPACES['DAISY']}}}content":
                     content = a.get("src", "")
                 if a.tag == f"{{{NAMESPACES['DAISY']}}}navPoint":

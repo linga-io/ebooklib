@@ -148,3 +148,25 @@ def test_archive_is_closed_when_loading_fails(tmp_path):
 
     assert isinstance(reader.zf, zipfile.ZipFile)
     assert reader.zf.fp is None
+
+
+@pytest.mark.parametrize(
+    "toc_ncx",
+    [
+        ncx("<docTitle><text>Book</text></docTitle>"),
+        ncx('<navMap><navPoint id="p1"><content src="chapter.xhtml"/></navPoint></navMap>', namespace="urn:x-other"),
+    ],
+    ids=["no-nav-map", "other-namespace"],
+)
+def test_ncx_without_a_nav_map_reads_as_an_empty_toc(tmp_path, toc_ncx):
+    book = read(tmp_path, CHAPTER_ITEM + NCX_ITEM, {"OEBPS/toc.ncx": toc_ncx}, spine=NCX_SPINE)
+
+    assert book.toc == []
+
+
+def test_ncx_nav_point_without_a_label_reads_with_an_empty_title(tmp_path):
+    toc_ncx = ncx('<navMap><navPoint id="p1"><navLabel/><content src="chapter.xhtml"/></navPoint></navMap>')
+
+    book = read(tmp_path, CHAPTER_ITEM + NCX_ITEM, {"OEBPS/toc.ncx": toc_ncx}, spine=NCX_SPINE)
+
+    assert links(book.toc) == [("chapter.xhtml", "")]
