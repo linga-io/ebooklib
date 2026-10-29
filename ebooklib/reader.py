@@ -186,61 +186,63 @@ class EpubReader:
             if media_type == "image/jpg":
                 media_type = "image/jpeg"
 
-            ei: EpubItem
-
             try:
-                match media_type:
-                    case "application/x-dtbncx+xml":
-                        ei = EpubNcx(uid=uid, file_name=href)
-
-                        ei.content = self.read_file(zip_path.join(self.opf_dir, ei.file_name))
-                    case "application/smil+xml":
-                        ei = EpubSMIL(uid=uid, file_name=href)
-
-                        ei.content = self.read_file(zip_path.join(self.opf_dir, ei.file_name))
-                    case "application/xhtml+xml" if "nav" in properties:
-                        ei = EpubNav(uid=uid, file_name=href)
-
-                        ei.content = self.read_file(zip_path.join(self.opf_dir, ei.file_name))
-                    case "application/xhtml+xml" if "cover" in properties:
-                        ei = EpubCoverHtml()
-
-                        ei.content = self.read_file(zip_path.join(self.opf_dir, href))
-                    case "application/xhtml+xml":
-                        ei = EpubHtml()
-
-                        ei.id = uid
-                        ei.file_name = href
-                        ei.media_type = media_type
-                        ei.media_overlay = r.get("media-overlay", None)
-                        ei.media_duration = r.get("duration", None)
-                        ei.content = self.read_file(zip_path.join(self.opf_dir, ei.get_name()))
-                        ei.properties = properties
-                    case _ if media_type in IMAGE_MEDIA_TYPES and "cover-image" in properties:
-                        ei = EpubCover(uid=uid, file_name=href)
-
-                        ei.media_type = media_type
-                        ei.content = self.read_file(zip_path.join(self.opf_dir, ei.get_name()))
-                    case _ if media_type in IMAGE_MEDIA_TYPES:
-                        ei = EpubImage()
-
-                        ei.id = uid
-                        ei.file_name = href
-                        ei.media_type = media_type
-                        ei.content = self.read_file(zip_path.join(self.opf_dir, ei.get_name()))
-                    case _:
-                        # different types
-                        ei = EpubItem()
-
-                        ei.id = uid
-                        ei.file_name = href
-                        ei.media_type = media_type
-
-                        ei.content = self.read_file(zip_path.join(self.opf_dir, ei.get_name()))
+                content = self.read_file(zip_path.join(self.opf_dir, href))
             except KeyError as err:
                 # One file missing from the archive should not fail the whole book: skip its item.
                 logger.warning("Skipping manifest item %r, its file is missing: %s", href, err)
                 continue
+
+            ei: EpubItem
+
+            match media_type:
+                case "application/x-dtbncx+xml":
+                    ei = EpubNcx(uid=uid, file_name=href)
+
+                    ei.content = content
+                case "application/smil+xml":
+                    ei = EpubSMIL(uid=uid, file_name=href)
+
+                    ei.content = content
+                case "application/xhtml+xml" if "nav" in properties:
+                    ei = EpubNav(uid=uid, file_name=href)
+
+                    ei.content = content
+                case "application/xhtml+xml" if "cover" in properties:
+                    ei = EpubCoverHtml()
+
+                    ei.content = content
+                case "application/xhtml+xml":
+                    ei = EpubHtml()
+
+                    ei.id = uid
+                    ei.file_name = href
+                    ei.media_type = media_type
+                    ei.media_overlay = r.get("media-overlay", None)
+                    ei.media_duration = r.get("duration", None)
+                    ei.content = content
+                    ei.properties = properties
+                case _ if media_type in IMAGE_MEDIA_TYPES and "cover-image" in properties:
+                    ei = EpubCover(uid=uid, file_name=href)
+
+                    ei.media_type = media_type
+                    ei.content = content
+                case _ if media_type in IMAGE_MEDIA_TYPES:
+                    ei = EpubImage()
+
+                    ei.id = uid
+                    ei.file_name = href
+                    ei.media_type = media_type
+                    ei.content = content
+                case _:
+                    # different types
+                    ei = EpubItem()
+
+                    ei.id = uid
+                    ei.file_name = href
+                    ei.media_type = media_type
+
+                    ei.content = content
 
             self.book.add_item(ei)
 
