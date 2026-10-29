@@ -106,3 +106,10 @@ def test_opf_meta_elements_are_read_under_their_name(tmp_path):
     book = read(tmp_path, CHAPTER_ITEM, {}, metadata=metadata)
 
     assert book.get_metadata("OPF", "cover") == [(None, {"name": "cover", "content": "cover-img"})]
+
+
+def test_metadata_without_dublin_core_reads_as_empty(tmp_path):
+    book = read(tmp_path, CHAPTER_ITEM, {}, metadata="<metadata/>")
+
+    assert book.title == ""
+    assert book.get_metadata("DC", "creator") == []
