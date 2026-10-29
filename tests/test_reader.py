@@ -209,7 +209,7 @@ def test_nav_document_without_a_list_reads_as_an_empty_toc(tmp_path, nav_body):
 
 @pytest.mark.parametrize("codec", ["utf-16-le", "utf-16-be"])
 def test_utf16_document_keeps_its_text(tmp_path, codec):
-    chapter = "﻿" + CHAPTER.decode().replace('encoding="utf-8"', 'encoding="utf-16"')
+    chapter = "\ufeff" + CHAPTER.decode().replace('encoding="utf-8"', 'encoding="utf-16"')
 
     book = read(tmp_path, CHAPTER_ITEM, {"OEBPS/chapter.xhtml": chapter.encode(codec)})
 
