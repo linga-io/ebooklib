@@ -138,3 +138,13 @@ def test_missing_container_raises_epub_exception(tmp_path):
 
     with pytest.raises(epub.EpubException):
         epub.read_epub(str(path))
+
+
+def test_archive_is_closed_when_loading_fails(tmp_path):
+    reader = epub.EpubReader(make_epub(tmp_path / "book.epub", b"<package/>", {}))
+
+    with pytest.raises(epub.EpubException):
+        reader.load()
+
+    assert isinstance(reader.zf, zipfile.ZipFile)
+    assert reader.zf.fp is None

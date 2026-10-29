@@ -405,10 +405,11 @@ class EpubReader:
                 raise EpubException(1, "Large Zip file") from None
 
         # 1st check metadata
-        self._load_container()
-        self._load_opf_file()
-
-        self.zf.close()
+        try:
+            self._load_container()
+            self._load_opf_file()
+        finally:
+            self.zf.close()
 
 
 def read_epub(name, options: dict[str, Any] | None = None) -> EpubBook:
