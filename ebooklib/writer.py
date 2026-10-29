@@ -90,6 +90,10 @@ class EpubWriter:
     def zipinfo(self, name: str) -> zipfile.ZipInfo:
         return zipfile.ZipInfo(name, self.datetime_to_zipinfo_datetime(self.options["mtime"]))
 
+    def _writestr(self, name: str, data: str | bytes) -> None:
+        # writestr() compresses a ZipInfo by its own compress_type, ZIP_STORED by default, not by the ZipFile's
+        self.out.writestr(self.zipinfo(name), data, zipfile.ZIP_DEFLATED, self.options["compresslevel"])
+
     def __init__(self, name: EpubTarget, book: EpubBook, options: dict[str, Any] | None = None) -> None:
         self.file_name = name
         self.book = book
@@ -123,7 +127,7 @@ class EpubWriter:
 
     def _write_container(self) -> None:
         container_xml = CONTAINER_XML % {"folder_name": self.book.FOLDER_NAME}
-        self.out.writestr(self.zipinfo(CONTAINER_PATH), container_xml)
+        self._writestr(CONTAINER_PATH, container_xml)
 
     def _write_opf_metadata(self, root: etree._Element) -> None:
         nsmap = {"dc": NAMESPACES["DC"], "opf": NAMESPACES["OPF"]}
@@ -283,7 +287,7 @@ class EpubWriter:
     def _write_opf_file(self, root: etree._Element) -> None:
         tree_str = etree.tostring(root, pretty_print=True, encoding="utf-8", xml_declaration=True)
 
-        self.out.writestr(self.zipinfo(f"{self.book.FOLDER_NAME}/content.opf"), tree_str)
+        self._writestr(f"{self.book.FOLDER_NAME}/content.opf", tree_str)
 
     def _write_opf(self) -> None:
         package_attributes = {
@@ -564,13 +568,13 @@ class EpubWriter:
     def _write_items(self) -> None:
         for item in self.book.get_items():
             if isinstance(item, EpubNcx):
-                self.out.writestr(self.zipinfo(f"{self.book.FOLDER_NAME}/{item.file_name}"), self._get_ncx())
+                self._writestr(f"{self.book.FOLDER_NAME}/{item.file_name}", self._get_ncx())
             elif isinstance(item, EpubNav):
-                self.out.writestr(self.zipinfo(f"{self.book.FOLDER_NAME}/{item.file_name}"), self._get_nav(item))
+                self._writestr(f"{self.book.FOLDER_NAME}/{item.file_name}", self._get_nav(item))
             elif item.manifest:
-                self.out.writestr(self.zipinfo(f"{self.book.FOLDER_NAME}/{item.file_name}"), item.get_content())
+                self._writestr(f"{self.book.FOLDER_NAME}/{item.file_name}", item.get_content())
             else:
-                self.out.writestr(self.zipinfo(item.file_name), item.get_content())
+                self._writestr(item.file_name, item.get_content())
 
     def write(self) -> None:
         # zipfile stubs expect IO[bytes], but any object with write/seek/tell works
