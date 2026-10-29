@@ -116,3 +116,8 @@ venv.bak/
 
 ### JetBrains template
 .idea/
+
+.vscode
+
+# uv lock file
+uv.lock
