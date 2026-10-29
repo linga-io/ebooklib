@@ -83,7 +83,11 @@ class EpubReader:
         return self.zf.read(name)
 
     def _load_container(self) -> None:
-        meta_inf = self.read_file("META-INF/container.xml")
+        try:
+            meta_inf = self.read_file("META-INF/container.xml")
+        except KeyError:
+            raise EpubException(-1, "Can not find META-INF/container.xml") from None
+
         tree = parse_string(meta_inf)
 
         for root_file in tree.findall(

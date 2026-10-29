@@ -1,6 +1,8 @@
 import logging
 import zipfile
 
+import pytest
+
 from ebooklib import epub
 
 CONTAINER = b"""<?xml version="1.0" encoding="utf-8"?>
@@ -127,3 +129,12 @@ def test_comments_and_processing_instructions_are_not_read_as_entries(tmp_path):
     assert book.title == "Test book"
     assert book.spine == [("chapter", "yes")]
     assert book.guide == [{"href": "chapter.xhtml", "title": "Text", "type": "text"}]
+
+
+def test_missing_container_raises_epub_exception(tmp_path):
+    path = tmp_path / "book.epub"
+    with zipfile.ZipFile(path, "w") as zf:
+        zf.writestr("mimetype", "application/epub+zip")
+
+    with pytest.raises(epub.EpubException):
+        epub.read_epub(str(path))
