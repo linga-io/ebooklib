@@ -113,3 +113,17 @@ def test_metadata_without_dublin_core_reads_as_empty(tmp_path):
 
     assert book.title == ""
     assert book.get_metadata("DC", "creator") == []
+
+
+def test_comments_and_processing_instructions_are_not_read_as_entries(tmp_path):
+    metadata = METADATA.replace("</metadata>", "<!-- note --><?generator x?></metadata>")
+    spine = (
+        '<spine><!-- body --><itemref idref="chapter"/></spine>'
+        '<guide><!-- landmarks --><reference type="text" title="Text" href="chapter.xhtml"/></guide>'
+    )
+
+    book = read(tmp_path, CHAPTER_ITEM, {}, spine=spine, metadata=metadata)
+
+    assert book.title == "Test book"
+    assert book.spine == [("chapter", "yes")]
+    assert book.guide == [{"href": "chapter.xhtml", "title": "Text", "type": "text"}]

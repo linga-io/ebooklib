@@ -124,7 +124,8 @@ class EpubReader:
             values.append((value, extra))
 
         for t in metadata:
-            if not etree.iselement(t) or t.tag is etree.Comment:
+            # comments and processing instructions have a function for a tag
+            if not etree.iselement(t) or not isinstance(t.tag, str):
                 continue
             if t.tag == default_ns + "meta":
                 name = t.get("name")
@@ -329,7 +330,7 @@ class EpubReader:
         if spine is None:
             raise EpubException(-1, "Can not find spine element")
 
-        self.book.spine = [(t.get("idref"), t.get("linear", "yes")) for t in spine]
+        self.book.spine = [(t.get("idref"), t.get("linear", "yes")) for t in spine if isinstance(t.tag, str)]
 
         toc = spine.get("toc", "")
         self.book.set_direction(spine.get("page-progression-direction", None))
@@ -353,7 +354,11 @@ class EpubReader:
     def _load_guide(self) -> None:
         guide = self.container.find(f"{{{NAMESPACES['OPF']}}}guide")
         if guide is not None:
-            self.book.guide = [{"href": t.get("href"), "title": t.get("title"), "type": t.get("type")} for t in guide]
+            self.book.guide = [
+                {"href": t.get("href"), "title": t.get("title"), "type": t.get("type")}
+                for t in guide
+                if isinstance(t.tag, str)
+            ]
 
     def _load_opf_file(self) -> None:
         try:
