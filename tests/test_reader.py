@@ -273,3 +273,26 @@ def test_ncx_nav_point_title_is_the_text_of_its_label(tmp_path, nav_label, title
     book = read(tmp_path, CHAPTER_ITEM + NCX_ITEM, {"OEBPS/toc.ncx": toc_ncx}, spine=NCX_SPINE)
 
     assert links(book.toc) == [("chapter.xhtml", title)]
+
+
+def test_ncx_is_read_from_the_archive_once(tmp_path):
+    reads = []
+
+    class RecordingReader(epub.EpubReader):
+        def read_file(self, name):
+            reads.append(name)
+            return super().read_file(name)
+
+    toc_ncx = ncx(
+        '<navMap><navPoint id="p1"><navLabel><text>One</text></navLabel><content src="chapter.xhtml"/>'
+        "</navPoint></navMap>"
+    )
+    opf = make_opf(CHAPTER_ITEM + NCX_ITEM, spine=NCX_SPINE)
+    reader = RecordingReader(
+        make_epub(tmp_path / "book.epub", opf, {"OEBPS/chapter.xhtml": CHAPTER, "OEBPS/toc.ncx": toc_ncx})
+    )
+
+    book = reader.load()
+
+    assert links(book.toc) == [("chapter.xhtml", "One")]
+    assert reads.count("OEBPS/toc.ncx") == 1

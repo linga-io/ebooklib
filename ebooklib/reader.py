@@ -247,7 +247,7 @@ class EpubReader:
 
             self.book.add_item(ei)
 
-    def _parse_ncx(self, data: bytes) -> None:
+    def _parse_ncx(self, data: str | bytes) -> None:
         tree = parse_string(data)
         tree_root = tree.getroot()
 
@@ -363,12 +363,8 @@ class EpubReader:
                     logger.warning("Can not find ncx file %r, reading the book without its NCX table of contents", toc)
                     return
 
-                try:
-                    ncxFile = self.read_file(zip_path.join(self.opf_dir, ncx_item.get_name()))
-                except KeyError:
-                    raise EpubException(-1, "Can not find ncx file.") from None
-
-                self._parse_ncx(ncxFile)
+                # _load_manifest has read the NCX into its item
+                self._parse_ncx(ncx_item.content)
 
     def _load_guide(self) -> None:
         guide = self.container.find(f"{{{NAMESPACES['OPF']}}}guide")
