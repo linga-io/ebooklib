@@ -50,6 +50,7 @@ from ebooklib.items import (
 )
 from ebooklib.reader import EpubReader, read_epub
 from ebooklib.toc import Link, Section
+from ebooklib.utils import get_pages_for_items, guess_type, parse_html_string, parse_string
 from ebooklib.writer import EpubWriter, write_epub
 
 __all__ = [
@@ -84,4 +85,9 @@ __all__ = [
     "write_epub",
     "EpubReader",
     "read_epub",
+    # utils, imported here before the split
+    "parse_string",
+    "parse_html_string",
+    "guess_type",
+    "get_pages_for_items",
 ]

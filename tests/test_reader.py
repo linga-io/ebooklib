@@ -62,3 +62,39 @@ def test_get_raw_content_returns_content_as_read(tmp_path):
 
     assert isinstance(item, epub.EpubHtml)
     assert item.get_raw_content() == CHAPTER
+
+
+CHAPTER_ITEM = '<item id="chapter" href="chapter.xhtml" media-type="application/xhtml+xml"/>'
+NCX_ITEM = '<item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>'
+NAV_ITEM = '<item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>'
+NCX_SPINE = '<spine toc="ncx"><itemref idref="chapter"/></spine>'
+
+
+def ncx(body, namespace="http://www.daisy.org/z3986/2005/ncx/"):
+    return f'<?xml version="1.0" encoding="utf-8"?><ncx xmlns="{namespace}" version="2005-1">{body}</ncx>'.encode()
+
+
+def nav(body):
+    return (
+        '<?xml version="1.0" encoding="utf-8"?><html xmlns="http://www.w3.org/1999/xhtml" '
+        f'xmlns:epub="http://www.idpf.org/2007/ops"><head><title>Nav</title></head><body>{body}</body></html>'
+    ).encode()
+
+
+NAV_TOC = nav('<nav epub:type="toc"><ol><li><a href="chapter.xhtml">One</a></li></ol></nav>')
+
+
+def read(tmp_path, manifest, files, spine='<spine><itemref idref="chapter"/></spine>', metadata=METADATA, options=None):
+    opf = make_opf(manifest, spine, metadata)
+    return epub.read_epub(make_epub(tmp_path / "book.epub", opf, {"OEBPS/chapter.xhtml": CHAPTER, **files}), options)
+
+
+def links(toc):
+    return [(link.href, link.title) for link in toc]
+
+
+def test_epub_module_still_exports_the_utils_helpers():
+    from ebooklib import utils
+
+    for name in ("parse_string", "parse_html_string", "guess_type", "get_pages_for_items"):
+        assert getattr(epub, name) is getattr(utils, name)
